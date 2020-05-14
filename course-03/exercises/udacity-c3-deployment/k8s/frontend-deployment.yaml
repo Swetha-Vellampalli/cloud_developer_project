@@ -1,0 +1,29 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    service: frontend
+  name: frontend
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        service: frontend
+        api: external        
+    spec:
+      containers:
+      - image: swetha29vellampalli/udacity-c3-frontend
+        name: frontend
+        imagePullPolicy: Always          
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "4Mi"
+            cpu: "10m"
+          limits:
+            memory: "4Mi"
+            cpu: "10m"
+      restartPolicy: Always
+
