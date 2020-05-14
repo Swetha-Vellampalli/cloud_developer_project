@@ -12,15 +12,15 @@ spec:
         service: backend-user
     spec:
       containers:
-        - image: scheele/udacity-restapi-user
+        - image: swetha29vellampalli/udacity-c3-restapi-user
           name: backend-user
           imagePullPolicy: Always
           resources:
             requests:
-              memory: "64Mi"
+              memory: "4Mi"
               cpu: "250m"
             limits:
-              memory: "1024Mi"
+              memory: "4Mi"
               cpu: "500m"
           env:
             - name: URL
