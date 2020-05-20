@@ -17,10 +17,9 @@ provider:
   region: ${opt:region, 'us-east-1'}
 
   environment:
+    IMAGES_S3_BUCKET: attachment.12345
     TODOS_TABLE: Todos-${self:provider.stage}
     USER_ID_INDEX: UserIdIndex
-    IMAGES_S3_BUCKET: attachment.12345
-    SIGNED_URL_EXPIRATION: 300
 
 custom:
   serverless-offline:
@@ -32,14 +31,13 @@ custom:
       - dev
     start:
       migrate: true
-      noStart: true
       host: localstack
       port: 4569
 
   s3:
     noStart: true
-    port: 4572
     host: localstack
+    port: 4572
     directory: /tmp
 
   serverless-iam-roles-per-function:
@@ -160,15 +158,6 @@ resources:
         RestApiId:
           Ref: ApiGatewayRestApi
 
-    RequestBodyValidator:
-      Type: AWS::ApiGateway::RequestValidator
-      Properties:
-        Name: 'request-body-validator'
-        RestApiId:
-          Ref: ApiGatewayRestApi
-        ValidateRequestBody: true
-        ValidateRequestParameters: false
-
     TodosTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -196,6 +185,28 @@ resources:
             Projection:
               ProjectionType: ALL # What attributes will be copied to an index
 
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: MyPolicy
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
+        Bucket: !Ref AttachmentsBucket
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
+
     AttachmentsBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -213,17 +224,3 @@ resources:
                 - DELETE
                 - HEAD
               MaxAge: 3000
-
-    BucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        PolicyDocument:
-          Id: MyPolicy
-          Version: "2012-10-17"
-          Statement:
-            - Sid: PublicReadForGetBucketObjects
-              Effect: Allow
-              Principal: '*'
-              Action: 's3:GetObject'
-              Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
-        Bucket: !Ref AttachmentsBucket
