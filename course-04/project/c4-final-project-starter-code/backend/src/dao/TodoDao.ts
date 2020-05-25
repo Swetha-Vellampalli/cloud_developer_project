@@ -43,10 +43,10 @@ export class TodoDao {
 
     public async getTodo(todoId: string, userId: string): Promise<TodoItem> {
         const result = await this.docClient
-            .query({
+            .scan({
                 TableName: this.todosTable,
                 IndexName: this.userIdIndex,
-                KeyConditionExpression: 'todoId = :todoId and userId = :userId',
+                FilterExpression: 'todoId = :todoId and userId = :userId',
                 ExpressionAttributeValues: {
                     ':todoId': todoId,
                     ':userId': userId,
@@ -89,7 +89,7 @@ export class TodoDao {
                     ':dueDate': todoUpdate.dueDate,
                 },
                 ExpressionAttributeNames: {
-                    '#n': 'name', // name conflicts with dynamos reserved words: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html
+                    '#n': 'name',
                 },
                 ReturnValues: 'UPDATED_NEW',
             })
@@ -111,6 +111,7 @@ export class TodoDao {
                 UpdateExpression: 'set attachmentUrl = :attachmentUrl',
                 ExpressionAttributeValues: {
                     ':attachmentUrl': attachmentUrl,
+
                 },
                 ReturnValues: 'UPDATED_NEW',
             })

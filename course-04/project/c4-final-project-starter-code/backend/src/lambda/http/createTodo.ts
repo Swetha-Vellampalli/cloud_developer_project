@@ -1,49 +1,56 @@
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import * as AWS from 'aws-sdk'
 import 'source-map-support/register'
-import * as uuid from 'uuid';
-
-import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
-import { cors } from 'middy/middlewares';
+import * as uuid from 'uuid'
+import { parseUserId } from '../../auth/utils'
+ import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
 import * as middy from 'middy';
-import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
-import { TodoDao } from '../../dao/TodoDao';
-import { parseUserId } from '../../auth/utils';
-import { TodoItem } from '../../models/TodoItem';
+import { cors } from 'middy/middlewares';
 
-const todoDao = new TodoDao();
+const docClient = new AWS.DynamoDB.DocumentClient()
 
- const createHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const newTodo: CreateTodoRequest = JSON.parse(event.body)
+const todosTable = process.env.TODOS_TABLE
 
-    const authorization = event.headers.Authorization;
-    const split = authorization.split(' ');
-    const jwtToken = split[1];
+export const createHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-    const newItem = await createTodo(newTodo, jwtToken);
+    console.log("EVENT:", event);
+
+    const todoId = uuid.v4()
+
+    const parsedBody: CreateTodoRequest = JSON.parse(event.body)
+
+    const authHeader = event.headers.Authorization
+    const authSplit = authHeader.split(" ")
+    const token = authSplit[1]
+
+    console.log("test",token)
+
+    const item = {
+      todoId: todoId,
+        userId: parseUserId(token),
+       name: parsedBody.name,
+      dueDate: parsedBody.dueDate,
+     createdAt: new Date().toISOString(),
+      done: false,
+    }
+
+    await docClient.put({
+        TableName: todosTable,
+        Item: item
+    }).promise()
+
     return {
         statusCode: 201,
+        headers: {
+            'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({
-            newItem,
-        }),
-    };
-};
-
-async function createTodo(
-    createTodoRequest: CreateTodoRequest,
-    jwtToken: string,
-): Promise<TodoItem> {
-    const itemId = uuid.v4();
-    const userId = parseUserId(jwtToken);
-
-    return todoDao.createTodo({
-        todoId: itemId,
-        userId: userId,
-        name: createTodoRequest.name,
-        dueDate: createTodoRequest.dueDate,
-        createdAt: new Date().toISOString(),
-        done: false,
-    });
+          item
+        })
+    }
 }
 
-export const handler = middy(createHandler).use(
+
+ export const handler = middy(createHandler).use(
     cors({ credentials: true }),
 );
