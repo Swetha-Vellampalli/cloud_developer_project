@@ -4,15 +4,16 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } f
 import * as middy from 'middy';
 import { cors } from 'middy/middlewares';
 import 'source-map-support/register';
-
+import { createLogger } from '../../utils/logger';
 import { getAllTodos } from '../../service/todoService';
+const logger = createLogger('getHandler');
 
  const getHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   // TODO: Get all TODO items for a current user
     const authorization = event.headers.Authorization;
     const split = authorization.split(' ');
     const jwtToken = split[1];
-    console.log("items are being retrieved");
+    logger.info("items are being retrieved");
 
     const todos = await getAllTodos(jwtToken);
 

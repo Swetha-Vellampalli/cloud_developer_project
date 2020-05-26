@@ -7,6 +7,7 @@ import * as AWSXRay from 'aws-xray-sdk';
 import * as middy from 'middy';
 import { cors } from 'middy/middlewares';
 import * as uuid from 'uuid';
+import { createLogger } from '../../utils/logger';
 
 const XAWS = AWSXRay.captureAWS(AWS);
 
@@ -18,6 +19,7 @@ const s3 = new XAWS.S3(options);
 
 const bucketName = process.env.IMAGES_S3_BUCKET;
 const urlExpiration = parseInt(process.env.SIGNED_URL_EXPIRATION);
+const logger = createLogger('generateUploadUrlHandler');
 
 
 function getUploadUrl(imageId: string): string {
@@ -37,7 +39,7 @@ function getUploadUrl(imageId: string): string {
      const jwtToken = split[1];
 
      const imageId = uuid.v4();
-  console.log("imageId id", imageId)
+  logger.info("imageId id", imageId)
 
      setAttachmentUrl(
          todoId,

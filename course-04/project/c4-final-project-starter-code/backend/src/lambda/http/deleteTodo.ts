@@ -4,7 +4,9 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } f
 import * as middy from 'middy';
 import { cors } from 'middy/middlewares';
 import { deleteTodo } from '../../service/todoService';
+import { createLogger } from '../../utils/logger';
 
+const logger = createLogger('deleteHandler');
 
  const deleteHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const todoId = event.pathParameters.todoId
@@ -12,7 +14,7 @@ import { deleteTodo } from '../../service/todoService';
  const authorization = event.headers.Authorization;
      const split = authorization.split(' ');
      const jwtToken = split[1];
-     console.log("item id being deleted ", todoId);
+     logger.info("item id being deleted ", todoId);
      await deleteTodo(todoId, jwtToken);
 
      return {

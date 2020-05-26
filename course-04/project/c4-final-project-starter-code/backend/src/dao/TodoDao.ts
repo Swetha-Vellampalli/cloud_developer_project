@@ -28,12 +28,15 @@ export class TodoDao {
 
     public async getAllTodos(userId: string): Promise<TodoItem[]> {
         const result = await this.docClient
-            .scan({
+            .query({
                 TableName: this.todosTable,
-                FilterExpression: 'userId = :userId',
+                 IndexName: "userIdIndex",
+                KeyConditionExpression: 'userId = :userId',
                 ExpressionAttributeValues: {
                     ':userId': userId,
                 },
+               ScanIndexForward: false
+
             })
             .promise();
 
@@ -43,7 +46,7 @@ export class TodoDao {
 
     public async getTodo(todoId: string, userId: string): Promise<TodoItem> {
         const result = await this.docClient
-            .scan({
+            .query({
                 TableName: this.todosTable,
                 IndexName: this.userIdIndex,
                 FilterExpression: 'todoId = :todoId and userId = :userId',

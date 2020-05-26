@@ -6,14 +6,16 @@ import { parseUserId } from '../../auth/utils'
  import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
 import * as middy from 'middy';
 import { cors } from 'middy/middlewares';
+import { createLogger } from '../../utils/logger';
 
 const docClient = new AWS.DynamoDB.DocumentClient()
 
 const todosTable = process.env.TODOS_TABLE
+const logger = createLogger('createHandler');
 
 export const createHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-    console.log("EVENT:", event);
+    logger.info("EVENT:", event);
 
     const todoId = uuid.v4()
 
@@ -23,7 +25,7 @@ export const createHandler: APIGatewayProxyHandler = async (event: APIGatewayPro
     const authSplit = authHeader.split(" ")
     const token = authSplit[1]
 
-    console.log("test",token)
+    logger.info("test",token)
 
     const item = {
       todoId: todoId,

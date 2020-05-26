@@ -9,14 +9,24 @@ plugins:
   - serverless-offline
   - serverless-aws-documentation
   - serverless-reqvalidator-plugin
-
+  - serverless-plugin-tracing
 provider:
   name: aws
   runtime: nodejs12.x
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
-
+  # enable AWS X-Ray Tracing
+  tracing:
+    lambda: true
+    apiGateway: true
+    iamRoleStatements:
+      - Effect: 'Allow' # xray permissions (required)
+        Action:
+          - 'xray:PutTraceSegments'
+          - 'xray:PutTelemetryRecords'
+        Resource:
+          - '*'
   environment:
     IMAGES_S3_BUCKET: attachment.12345
     TODOS_TABLE: Todos-${self:provider.stage}
@@ -62,8 +72,12 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:Scan
+          - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/*
 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
